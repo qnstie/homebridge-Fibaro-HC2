@@ -25,7 +25,10 @@
 //            "securitysystem": "PUT enabled OR disabled IN ORDER TO MANAGE THE AVAILABILITY OF THE SECURITY SYSTEM",
 //            "switchglobalvariables": "PUT A COMMA SEPARATED LIST OF HOME CENTER GLOBAL VARIABLES ACTING LIKE A BISTABLE SWITCH",
 //            "thermostattimeout": "PUT THE NUMBER OF SECONDS FOR THE THERMOSTAT TIMEOUT, DEFAULT: 7200 (2 HOURS). PUT 0 FOR INFINITE",
-//            "enablecoolingstatemanagemnt": "PUT on TO AUTOMATICALLY MANAGE HEATING STATE FOR THERMOSTAT, off TO DISABLE IT. DEFAULT off"
+//            "enablecoolingstatemanagemnt": "PUT on TO AUTOMATICALLY MANAGE HEATING STATE FOR THERMOSTAT, off TO DISABLE IT. DEFAULT off",
+//            "excludedevices": "PUT A COMMA SEPARATED LIST OF NAMES OF DEVICES TO BE EXCLUDED FROM AUTOMATED SUBMITTING TO HOMEBRIDGE",
+//            "includedevices": "PUT A COMMA SEPARATED LIST OF NAMES OF DEVICES THAT ARE INVISIBLE OR PREFIXED WITH '_' WHICH SHOULD ANYWAY BE INCLUDED IN AUTOMATED SUBMITTING TO HOMEBRIDGE",
+//            "testmode": "IF true, NO DEVICES WILL BE SUBMITTED TO HOMEBRIDGE, BUT ONLY LOGGED. USEFUL TO BUILD INCLUDE/EXCLUDE LIST. DEFAULT false"
 //     }
 // ],
 //
@@ -52,6 +55,8 @@ class FibaroHC2 {
         this.securitySystemScenes = {};
         this.securitySystemService = {};
         this.config = config;
+        this.deviceIncludeList = new Array();
+        this.deviceExcludeList = new Array();
         let pollerPeriod = this.config.pollerperiod ? parseInt(this.config.pollerperiod) : defaultPollerPeriod;
         if (isNaN(pollerPeriod) || pollerPeriod < 1 || pollerPeriod > 100)
             pollerPeriod = defaultPollerPeriod;
@@ -67,6 +72,16 @@ class FibaroHC2 {
         this.poller = new pollerupdate_1.Poller(this, pollerPeriod, Service, Characteristic);
         this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
         this.getFunctions = new getFunctions_1.GetFunctions(Characteristic, this);
+        if (this.config.excludedevices != undefined) {
+            this.deviceExcludeList = this.config.excludedevices.split(",");
+        }
+        if (this.config.includedevices != undefined) {
+            this.deviceIncludeList = this.config.includedevices.split(",");
+        }
+        if (this.config.testmode == undefined || this.config.testmode != "true")
+            this.testMode = false;
+        else
+            this.testMode = true;
     }
     didFinishLaunching() {
         this.log('didFinishLaunching.', '');
@@ -109,15 +124,23 @@ class FibaroHC2 {
     LoadAccessories(devices) {
         this.log('Loading accessories', '');
         devices.map((s, i, a) => {
-            if (s.visible == true && s.name.charAt(0) != "_") {
-                this.addAccessory(shadows_1.ShadowAccessory.createShadowAccessory(s, Accessory, Service, Characteristic, this));
+            let shadow = shadows_1.ShadowAccessory.createShadowAccessory(s, Accessory, Service, Characteristic, this);
+            if (this.testMode)
+                this.log("TEST: Adding Accessory: ", (shadow == undefined ? "undefined" : shadow.name));
+            else if (this.deviceExcludeList.indexOf(s.name) == -1 &&
+                (this.deviceIncludeList.indexOf(s.name) != -1 ||
+                    (s.visible == true && s.name.charAt(0) != "_"))) {
+                this.addAccessory(shadow);
             }
         });
         // Create Security System accessory
         if (this.config.securitysystem == "enabled") {
             let device = { name: "FibaroSecuritySystem", roomID: 0, id: 0 };
             let sa = shadows_1.ShadowAccessory.createShadowSecuritySystemAccessory(device, Accessory, Service, Characteristic, this);
-            this.addAccessory(sa);
+            if (this.testMode)
+                this.log("TEST: Adding Security System: ", (sa == undefined ? "undefined" : sa.name));
+            else
+                this.addAccessory(sa);
         }
         // Create Global Variable Switches
         if (this.config.switchglobalvariables && this.config.switchglobalvariables != "") {
@@ -125,14 +148,19 @@ class FibaroHC2 {
             for (let i = 0; i < globalVariables.length; i++) {
                 let device = { name: globalVariables[i], roomID: 0, id: 0 };
                 let sa = shadows_1.ShadowAccessory.createShadowGlobalVariableSwitchAccessory(device, Accessory, Service, Characteristic, this);
-                this.addAccessory(sa);
+                if (this.testMode)
+                    this.log("TEST: Adding Global Variable Switch: ", (sa == undefined ? "undefined" : sa.name));
+                else
+                    this.addAccessory(sa);
             }
         }
         // Remove not reviewd accessories: cached accessories no more present in Home Center
-        let accessories = this.accessories.values(); // Iterator for accessories, key is the uniqueseed
-        for (let a of accessories) {
-            if (!a.reviewed) {
-                this.removeAccessory(a);
+        if (!this.testMode) {
+            let accessories = this.accessories.values(); // Iterator for accessories, key is the uniqueseed
+            for (let a of accessories) {
+                if (!a.reviewed) {
+                    this.removeAccessory(a);
+                }
             }
         }
         // Start the poller update mechanism
