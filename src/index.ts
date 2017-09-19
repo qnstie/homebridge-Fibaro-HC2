@@ -119,13 +119,6 @@ class FibaroHC2 {
   		if (this.config.enablecoolingstatemanagemnt == undefined)
 	  		this.config.enablecoolingstatemanagemnt = defaultEnableCoolingStateManagemnt;
 
-		this.fibaroClient = new FibaroClient(this.config.host, this.config.username, this.config.password);
-  		this.poller = new Poller(this, pollerPeriod, Service, Characteristic);
-
-    	this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
-    	
-    	this.getFunctions = new GetFunctions(Characteristic, this);
-        
         if (this.config.excludedevices != undefined) {
             this.deviceExcludeList = this.config.excludedevices.split(",");
         }
@@ -136,6 +129,13 @@ class FibaroHC2 {
 	  		this.testMode = false;
         else
             this.testMode = true;
+
+        this.fibaroClient = new FibaroClient(this.config.host, this.config.username, this.config.password);
+  		this.poller = new Poller(this, pollerPeriod, Service, Characteristic);
+
+    	this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
+    	
+    	this.getFunctions = new GetFunctions(Characteristic, this);
   	}
     
   	didFinishLaunching () { 
@@ -180,19 +180,19 @@ class FibaroHC2 {
   	LoadAccessories(devices) {
 		this.log('Loading accessories', '');
 		devices.map((s, i, a) => {
-            let shadow = ShadowAccessory.createShadowAccessory(s, Accessory, Service, Characteristic, this);
-            
             if (this.deviceExcludeList.indexOf(s.id)==-1 && 
                  (this.deviceIncludeList.indexOf(s.id)!=-1 || 
                   (s.visible == true && s.name.charAt(0) != "_"))) {
+                let shadow = ShadowAccessory.createShadowAccessory(s, Accessory, Service, Characteristic, this);
                 if (this.testMode) {
                     if (shadow==undefined)
-                        this.log("TEST: --> Skipping Device: ", s.name + " (Fibaro ID: " + s.id + ")");
+                        this.log("TEST: --> Skipping Device (creation step): ", s.name + " (Fibaro ID: " + s.id + ")");
                     else
                         this.log("TEST: Adding Accessory: ", shadow.name + " (Fibaro device ID: " + s.id + ")");
                 } else
                     this.addAccessory(shadow);
-			}
+			} else if (this.testMode)
+                this.log("TEST: --> Skipping Device (filter step): ", s.name + " (Fibaro ID: " + s.id + ")");
 		});
 		
 		// Create Security System accessory
