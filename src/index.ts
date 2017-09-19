@@ -39,6 +39,8 @@
 
 'use strict'
 
+import stringify = require("node-stringify");
+
 import {FibaroClient} from './fibaro-api'
 import {	pluginName,
 			platformName, 
@@ -179,6 +181,11 @@ class FibaroHC2 {
   	}
   	LoadAccessories(devices) {
 		this.log('Loading accessories', '');
+        
+        this.log("deviceIncludeList: ", stringify(this.deviceIncludeList));
+        this.log("deviceExcludeList: ", stringify(this.deviceExcludeList));
+        this.log("testMode", stringify(this.testMode));
+        
 		devices.map((s, i, a) => {
             if (this.deviceExcludeList.indexOf(s.id)==-1 && 
                  (this.deviceIncludeList.indexOf(s.id)!=-1 || 

@@ -35,6 +35,7 @@
 // When you attempt to add a device, it will ask for a "PIN code".
 // The default code for all HomeBridge accessories is 031-45-154.
 'use strict';
+const stringify = require("node-stringify");
 const fibaro_api_1 = require("./fibaro-api");
 const shadows_1 = require("./shadows");
 const setFunctions_1 = require("./setFunctions");
@@ -123,6 +124,9 @@ class FibaroHC2 {
     }
     LoadAccessories(devices) {
         this.log('Loading accessories', '');
+        this.log("deviceIncludeList: ", stringify(this.deviceIncludeList));
+        this.log("deviceExcludeList: ", stringify(this.deviceExcludeList));
+        this.log("testMode", stringify(this.testMode));
         devices.map((s, i, a) => {
             if (this.deviceExcludeList.indexOf(s.id) == -1 &&
                 (this.deviceIncludeList.indexOf(s.id) != -1 ||
