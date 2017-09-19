@@ -26,8 +26,8 @@
 //            "switchglobalvariables": "PUT A COMMA SEPARATED LIST OF HOME CENTER GLOBAL VARIABLES ACTING LIKE A BISTABLE SWITCH",
 //            "thermostattimeout": "PUT THE NUMBER OF SECONDS FOR THE THERMOSTAT TIMEOUT, DEFAULT: 7200 (2 HOURS). PUT 0 FOR INFINITE",
 //            "enablecoolingstatemanagemnt": "PUT on TO AUTOMATICALLY MANAGE HEATING STATE FOR THERMOSTAT, off TO DISABLE IT. DEFAULT off",
-//            "excludedevices": "PUT A COMMA SEPARATED LIST OF NAMES OF DEVICES TO BE EXCLUDED FROM AUTOMATED SUBMITTING TO HOMEBRIDGE",
-//            "includedevices": "PUT A COMMA SEPARATED LIST OF NAMES OF DEVICES THAT ARE INVISIBLE OR PREFIXED WITH '_' WHICH SHOULD ANYWAY BE INCLUDED IN AUTOMATED SUBMITTING TO HOMEBRIDGE",
+//            "excludedevices": "PUT A COMMA SEPARATED LIST OF IDS OF DEVICES TO BE EXCLUDED FROM AUTOMATED SUBMITTING TO HOMEBRIDGE",
+//            "includedevices": "PUT A COMMA SEPARATED LIST OF IDS OF DEVICES THAT ARE INVISIBLE OR PREFIXED WITH '_' WHICH SHOULD ANYWAY BE INCLUDED IN AUTOMATED SUBMITTING TO HOMEBRIDGE",
 //            "testmode": "IF true, NO DEVICES WILL BE SUBMITTED TO HOMEBRIDGE, BUT ONLY LOGGED. USEFUL TO BUILD INCLUDE/EXCLUDE LIST. DEFAULT false"
 //     }
 // ],
@@ -125,8 +125,8 @@ class FibaroHC2 {
         this.log('Loading accessories', '');
         devices.map((s, i, a) => {
             let shadow = shadows_1.ShadowAccessory.createShadowAccessory(s, Accessory, Service, Characteristic, this);
-            if (this.deviceExcludeList.indexOf(s.name) == -1 &&
-                (this.deviceIncludeList.indexOf(s.name) != -1 ||
+            if (this.deviceExcludeList.indexOf(s.id) == -1 &&
+                (this.deviceIncludeList.indexOf(s.id) != -1 ||
                     (s.visible == true && s.name.charAt(0) != "_"))) {
                 if (this.testMode) {
                     if (shadow == undefined)
