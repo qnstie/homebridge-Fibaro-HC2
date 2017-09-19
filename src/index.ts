@@ -180,15 +180,17 @@ class FibaroHC2 {
 		accessory.reachable = true;
   	}
   	LoadAccessories(devices) {
-		this.log('Loading accessories', '');
-        
-        this.log("deviceIncludeList: ", stringify(this.deviceIncludeList));
-        this.log("deviceExcludeList: ", stringify(this.deviceExcludeList));
+		this.log('Loading accessories', ' (testMode='+stringify(this.testMode)+')');
         this.log("testMode", stringify(this.testMode));
         
+        if (this.testMode) {
+            this.log("deviceIncludeList: ", stringify(this.deviceIncludeList));
+            this.log("deviceExcludeList: ", stringify(this.deviceExcludeList));
+        }
+        
 		devices.map((s, i, a) => {
-            if (this.deviceExcludeList.indexOf(s.id)==-1 && 
-                 (this.deviceIncludeList.indexOf(s.id)!=-1 || 
+            if (!this.deviceExcludeList.some(x => x==s.id) && 
+                 (this.deviceIncludeList.some(x => x==s.id) || 
                   (s.visible == true && s.name.charAt(0) != "_"))) {
                 let shadow = ShadowAccessory.createShadowAccessory(s, Accessory, Service, Characteristic, this);
                 if (this.testMode) {
