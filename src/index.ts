@@ -183,7 +183,11 @@ class FibaroHC2 {
             let shadow = ShadowAccessory.createShadowAccessory(s, Accessory, Service, Characteristic, this);
             
             if (this.testMode)
-                this.log("TEST: Adding Accessory: ", (shadow==undefined ? "undefined" : shadow.name));
+                if (shadow==undefined)
+                    this.log("TEST: --> Skipping Accessory: ", s.name);
+                else
+                    this.log("TEST: Adding Accessory: ", shadow.name);
+            
 			else if (this.deviceExcludeList.indexOf(s.name)==-1 && 
                      (this.deviceIncludeList.indexOf(s.name)!=-1 || 
                       (s.visible == true && s.name.charAt(0) != "_"))) {

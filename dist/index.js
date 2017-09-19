@@ -126,7 +126,10 @@ class FibaroHC2 {
         devices.map((s, i, a) => {
             let shadow = shadows_1.ShadowAccessory.createShadowAccessory(s, Accessory, Service, Characteristic, this);
             if (this.testMode)
-                this.log("TEST: Adding Accessory: ", (shadow == undefined ? "undefined" : shadow.name));
+                if (shadow == undefined)
+                    this.log("TEST: --> Skipping Accessory: ", s.name);
+                else
+                    this.log("TEST: Adding Accessory: ", shadow.name);
             else if (this.deviceExcludeList.indexOf(s.name) == -1 &&
                 (this.deviceIncludeList.indexOf(s.name) != -1 ||
                     (s.visible == true && s.name.charAt(0) != "_"))) {
